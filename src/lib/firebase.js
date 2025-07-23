@@ -46,23 +46,7 @@ export const uploadVideoAndGetURL = async (stream, userId) => {
     throw new Error("No video stream provided.");
   }
   
-  if (firebaseConfig.apiKey === "YOUR_API_KEY") {
-    console.error("Firebase is not configured. Please add your credentials to src/lib/firebase.js");
-    toast({
-        title: "Firebase Not Configured",
-        description: "SOS video upload is disabled. Please configure Firebase.",
-        variant: "destructive",
-        duration: 10000
-    });
-    // Return mock data and continue flow
-    return {
-        videoUrl: "https://firebasestorage.googleapis.com/v0/b/project/o/sos-videos%2Fsos_12345678.mp4",
-        videoThumbnail: "https://firebasestorage.googleapis.com/v0/b/project/o/thumbnails%2Fsos_12345678.jpg",
-        videoDuration: 15,
-    };
-  }
-
-  const videoDurationMs = 15000;
+  const videoDurationMs = 5000; // 5 seconds as requested
   const videoBlob = await recordStream(stream, videoDurationMs);
   
   const videoFileName = `sos-videos/sos_${userId}_${Date.now()}.mp4`;
