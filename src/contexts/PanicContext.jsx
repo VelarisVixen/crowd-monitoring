@@ -55,6 +55,9 @@ export const PanicProvider = ({ children }) => {
       if (stream) {
         toast({ title: "Uploading Video...", description: "Your emergency video is being securely uploaded. Please wait." });
         videoData = await uploadVideoAndGetURL(stream, `user_12345`);
+
+        // Stop the camera stream after recording
+        stream.getTracks().forEach(track => track.stop());
       }
 
       const deviceInfo = getDeviceInfo();
