@@ -1,71 +1,46 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { AlertTriangle, Check, Loader2 } from 'lucide-react';
+import { AlertTriangle, Check, Loader2, Video } from 'lucide-react';
 import { usePanic } from '@/contexts/PanicContext';
-import {
-  AlertDialog,
-  AlertDialogContent,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogCancel,
-  AlertDialogAction,
-} from '@/components/ui/alert-dialog';
 import { toast } from '@/components/ui/use-toast';
 
 const PanicButton = () => {
   const { isActivated, activatePanic, isProcessing, setIsProcessing } = usePanic();
-  const [showConfirmation, setShowConfirmation] = useState(false);
-  const [message, setMessage] = useState('');
-  const videoRef = useRef(null);
   const streamRef = useRef(null);
 
-  const handlePanicPress = () => {
+  const handlePanicPress = async () => {
     if (isActivated || isProcessing) return;
-    setShowConfirmation(true);
-  };
 
-  useEffect(() => {
-    if (showConfirmation) {
-      setIsProcessing(true);
-      const getMedia = async () => {
-        try {
-          const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-          streamRef.current = stream;
-          if (videoRef.current) {
-            videoRef.current.srcObject = stream;
-          }
-        } catch (err) {
-          console.error("Camera/Mic permission denied:", err);
-          toast({
-            title: "Permission Denied",
-            description: "Camera and microphone access is required. Please enable permissions in your browser settings.",
-            variant: "destructive",
-            duration: 8000
-          });
-          setShowConfirmation(false);
-        } finally {
-          setIsProcessing(false);
-        }
-      };
-      getMedia();
-    } else {
-      // Cleanup stream when dialog is closed
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach(track => track.stop());
-        streamRef.current = null;
-      }
+    setIsProcessing(true);
+
+    try {
+      // Show immediate feedback
+      toast({
+        title: "🚨 SOS Activated",
+        description: "Recording 5-second emergency video...",
+        duration: 3000
+      });
+
+      // Get camera and microphone access
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { width: 1280, height: 720 },
+        audio: true
+      });
+      streamRef.current = stream;
+
+      // Start automatic recording and upload
+      await activatePanic("Emergency SOS activated - automatic recording", streamRef.current);
+
+    } catch (err) {
+      console.error("Camera/Mic permission denied:", err);
+      toast({
+        title: "Permission Denied",
+        description: "Camera and microphone access is required for emergency recording.",
+        variant: "destructive",
+        duration: 8000
+      });
+      setIsProcessing(false);
     }
-  }, [showConfirmation, setIsProcessing]);
-
-  const confirmPanic = async () => {
-    await activatePanic(message, streamRef.current);
-    setShowConfirmation(false); // This will trigger cleanup in useEffect
-  };
-
-  const cancelPanic = () => {
-    setShowConfirmation(false); // This will trigger cleanup in useEffect
   };
 
   return (
