@@ -3,12 +3,13 @@ import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { toast } from '@/components/ui/use-toast';
 
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_AUTH_DOMAIN",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_STORAGE_BUCKET",
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyC6XtUDmKv0aul-zUL3TRH1i2UxWtgCLU0",
+  authDomain: "crowd-monitoring-e1f70.firebaseapp.com",
+  projectId: "crowd-monitoring-e1f70",
+  storageBucket: "crowd-monitoring-e1f70.firebasestorage.app",
+  messagingSenderId: "1069463850395",
+  appId: "1:1069463850395:web:f24d177297c60e0c50a53e",
+  measurementId: "G-68VH97XQ6V"
 };
 
 const app = initializeApp(firebaseConfig);
