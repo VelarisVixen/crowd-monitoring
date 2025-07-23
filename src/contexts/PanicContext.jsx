@@ -114,27 +114,14 @@ export const PanicProvider = ({ children }) => {
   };
 
   const sendPanicAlertToBackend = async (payload) => {
-    try {
-      // IMPORTANT: Replace with your actual backend endpoint
-      const response = await fetch('https://your-backend.com/api/sos/alert', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-        },
-        body: JSON.stringify(payload)
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ message: 'Server returned an error' }));
-        throw new Error(`Server Error: ${response.status} - ${errorData.message}`);
-      }
-
-      console.log('Panic alert sent to backend successfully', await response.json());
-    } catch (error) {
-      console.error('Backend panic alert failed:', error);
-      throw error; 
-    }
+    // Backend integration disabled for frontend-only demo
+    console.log('SOS Alert data ready for backend:', payload);
+    toast({
+      title: "Alert Simulated",
+      description: "This is a demo app. In production, this would send the alert to emergency services.",
+      duration: 5000
+    });
+    return Promise.resolve();
   };
 
   const deactivatePanic = () => {
