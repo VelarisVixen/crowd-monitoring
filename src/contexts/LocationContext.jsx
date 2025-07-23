@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { toast } from '@/components/ui/use-toast';
 
@@ -61,28 +60,11 @@ export const LocationProvider = ({ children }) => {
     }
   };
 
-  // Backend integration function - replace with actual API endpoint
+  // Backend integration function - disabled for frontend-only app
   const sendLocationToBackend = async (locationData) => {
-    try {
-      // Placeholder for backend API call
-      const response = await fetch('/api/location/update', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-        },
-        body: JSON.stringify(locationData)
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to send location to server');
-      }
-
-      console.log('Location sent to backend successfully');
-    } catch (error) {
-      console.error('Backend location update failed:', error);
-      // Don't throw here to avoid breaking the location update flow
-    }
+    // Backend integration disabled - this is a frontend-only demo app
+    console.log('Location data ready for backend:', locationData);
+    return Promise.resolve();
   };
 
   const watchLocation = () => {
