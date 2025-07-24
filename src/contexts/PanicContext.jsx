@@ -72,9 +72,13 @@ export const PanicProvider = ({ children }) => {
           longitude: currentLocation.longitude,
           accuracy: currentLocation.accuracy
         },
-        message: message || "Emergency SOS activated without a message.",
+        message: message || "Emergency SOS activated - automatic recording",
         deviceInfo: deviceInfo
       };
+
+      // Save to Firestore
+      toast({ title: "Saving Alert...", description: "Saving your SOS alert to database..." });
+      await saveSOSAlertToFirestore(panicPayload);
 
       await sendPanicAlertToBackend(panicPayload);
 
