@@ -98,8 +98,8 @@ export const PanicProvider = ({ children }) => {
 
       setIsActivated(true);
       toast({
-        title: "🚨 Panic Alert Sent!",
-        description: "Emergency services have been notified with your video and location.",
+        title: "🚨 SOS Alert Saved!",
+        description: "Emergency alert with video saved to database and emergency services notified.",
         duration: 8000,
       });
 
