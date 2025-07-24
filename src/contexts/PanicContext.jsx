@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState } from 'react';
 import { toast } from '@/components/ui/use-toast';
 import { useLocation } from '@/contexts/LocationContext';
-import { uploadVideoAndGetURL } from '@/lib/firebase';
+import { uploadVideoAndGetURL, saveSOSAlertToFirestore } from '@/lib/firebase';
 
 const PanicContext = createContext();
 
