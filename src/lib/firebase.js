@@ -45,6 +45,21 @@ const recordStream = (stream, duration) => {
   });
 };
 
+export const saveSOSAlertToFirestore = async (alertData) => {
+  try {
+    const docRef = await addDoc(collection(db, 'sos-alerts'), {
+      ...alertData,
+      createdAt: serverTimestamp()
+    });
+
+    console.log('SOS Alert saved to Firestore with ID:', docRef.id);
+    return docRef.id;
+  } catch (error) {
+    console.error('Error saving SOS alert to Firestore:', error);
+    throw new Error('Failed to save SOS alert to database');
+  }
+};
+
 export const uploadVideoAndGetURL = async (stream, userId) => {
   if (!stream) {
     throw new Error("No video stream provided.");
