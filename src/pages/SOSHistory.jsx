@@ -1,26 +1,108 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Helmet } from 'react-helmet';
-import { 
-  AlertTriangle, 
-  MapPin, 
-  Clock, 
-  Trash2, 
+import {
+  AlertTriangle,
+  MapPin,
+  Clock,
+  Trash2,
   Download,
   Filter,
-  Calendar
+  Calendar,
+  RefreshCw
 } from 'lucide-react';
 import { usePanic } from '@/contexts/PanicContext';
 import { toast } from '@/components/ui/use-toast';
+import { db } from '@/lib/firebase';
+import { collection, query, where, orderBy, onSnapshot } from 'firebase/firestore';
 
 const SOSHistory = () => {
   const { panicHistory, clearHistory } = usePanic();
   const [filter, setFilter] = useState('all');
   const [sortBy, setSortBy] = useState('newest');
+  const [firebaseSOS, setFirebaseSOS] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isConnected, setIsConnected] = useState(false);
+
+  // Listen to SOS alerts from Firebase
+  useEffect(() => {
+    const fetchSOSAlerts = () => {
+      try {
+        setIsLoading(true);
+
+        // Query for SOS alerts from the alerts collection
+        // Looking for documents that have userId field (indicating SOS alerts)
+        const sosQuery = query(
+          collection(db, 'alerts'),
+          where('userId', '!=', null)
+        );
+
+        const unsubscribe = onSnapshot(
+          sosQuery,
+          (snapshot) => {
+            setIsConnected(true);
+            setIsLoading(false);
+
+            const sosAlerts = [];
+            snapshot.docs.forEach((doc) => {
+              const data = doc.data();
+
+              // Convert Firestore data to match our UI structure
+              const sosAlert = {
+                id: doc.id,
+                timestamp: data.createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
+                location: data.location,
+                status: 'active', // Default status for SOS alerts
+                type: 'sos',
+                message: data.message || 'Emergency SOS Alert',
+                videoUrl: data.videoUrl,
+                videoThumbnail: data.videoThumbnail,
+                videoDuration: data.videoDuration,
+                userId: data.userId,
+                deviceInfo: data.deviceInfo
+              };
+
+              sosAlerts.push(sosAlert);
+            });
+
+            // Sort by timestamp (newest first)
+            sosAlerts.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+            setFirebaseSOS(sosAlerts);
+            console.log('Loaded SOS alerts from Firebase:', sosAlerts.length);
+          },
+          (error) => {
+            console.error('Error loading SOS alerts:', error);
+            setIsConnected(false);
+            setIsLoading(false);
+            toast({
+              title: "Failed to Load SOS History",
+              description: "Could not connect to Firebase database.",
+              variant: "destructive"
+            });
+          }
+        );
+
+        return unsubscribe;
+      } catch (error) {
+        console.error('Error setting up SOS listener:', error);
+        setIsLoading(false);
+        return null;
+      }
+    };
+
+    const unsubscribe = fetchSOSAlerts();
+
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
+  }, []);
+
+  // Combine local and Firebase SOS history
+  const allSOSHistory = [...firebaseSOS, ...panicHistory];
 
   const handleExportHistory = () => {
-    if (panicHistory.length === 0) {
+    if (allSOSHistory.length === 0) {
       toast({
         title: "No Data to Export",
         description: "You don't have any SOS history to export."
@@ -31,8 +113,8 @@ const SOSHistory = () => {
     // Backend integration hook - export history
     const exportData = {
       exportDate: new Date().toISOString(),
-      totalAlerts: panicHistory.length,
-      alerts: panicHistory.map(alert => ({
+      totalAlerts: allSOSHistory.length,
+      alerts: allSOSHistory.map(alert => ({
         id: alert.id,
         timestamp: alert.timestamp,
         location: alert.location,
@@ -58,7 +140,7 @@ const SOSHistory = () => {
   };
 
   const handleClearHistory = () => {
-    if (panicHistory.length === 0) {
+    if (allSOSHistory.length === 0) {
       toast({
         title: "No History to Clear",
         description: "Your SOS history is already empty."
@@ -67,6 +149,15 @@ const SOSHistory = () => {
     }
 
     clearHistory();
+
+    // Note: This only clears local history, Firebase data requires admin access
+    if (firebaseSOS.length > 0) {
+      toast({
+        title: "Local History Cleared",
+        description: "Local history cleared. Firebase records require admin access to delete.",
+        duration: 5000
+      });
+    }
   };
 
   const getStatusColor = (status) => {
@@ -87,7 +178,7 @@ const SOSHistory = () => {
     return `${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)}`;
   };
 
-  const sortedHistory = [...panicHistory].sort((a, b) => {
+  const sortedHistory = [...allSOSHistory].sort((a, b) => {
     if (sortBy === 'newest') {
       return new Date(b.timestamp) - new Date(a.timestamp);
     } else {
@@ -117,10 +208,22 @@ const SOSHistory = () => {
           <div>
             <h1 className="text-2xl font-bold text-white">SOS History</h1>
             <p className="text-white/70 text-sm">
-              {panicHistory.length} total alerts sent
+              {isLoading ? 'Loading...' : `${allSOSHistory.length} total alerts sent`}
+              {isConnected && (
+                <span className="ml-2 text-green-400">• Connected to Firebase</span>
+              )}
             </p>
           </div>
           <div className="flex space-x-2">
+            <motion.button
+              onClick={() => window.location.reload()}
+              className="p-3 glass rounded-xl hover:bg-white/10 transition-colors"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              title="Refresh SOS History"
+            >
+              <RefreshCw size={20} className={`text-white ${isLoading ? 'animate-spin' : ''}`} />
+            </motion.button>
             <motion.button
               onClick={handleExportHistory}
               className="p-3 glass rounded-xl hover:bg-white/10 transition-colors"
@@ -184,19 +287,19 @@ const SOSHistory = () => {
         >
           <div className="glass rounded-2xl p-4 text-center">
             <div className="text-2xl font-bold text-red-400">
-              {panicHistory.filter(a => a.status === 'active').length}
+              {allSOSHistory.filter(a => a.status === 'active').length}
             </div>
             <div className="text-white/60 text-sm">Active</div>
           </div>
           <div className="glass rounded-2xl p-4 text-center">
             <div className="text-2xl font-bold text-green-400">
-              {panicHistory.filter(a => a.status === 'resolved').length}
+              {allSOSHistory.filter(a => a.status === 'resolved').length}
             </div>
             <div className="text-white/60 text-sm">Resolved</div>
           </div>
           <div className="glass rounded-2xl p-4 text-center">
             <div className="text-2xl font-bold text-yellow-400">
-              {panicHistory.filter(a => a.status === 'pending').length}
+              {allSOSHistory.filter(a => a.status === 'pending').length}
             </div>
             <div className="text-white/60 text-sm">Pending</div>
           </div>
@@ -240,12 +343,24 @@ const SOSHistory = () => {
                       </div>
                       <div className="flex-1">
                         <div className="flex items-center space-x-2 mb-2">
-                          <h3 className="text-white font-semibold">Emergency Alert</h3>
+                          <h3 className="text-white font-semibold">
+                            {alert.type === 'sos' ? 'SOS Emergency Alert' : 'Emergency Alert'}
+                          </h3>
                           <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(alert.status)}`}>
                             {alert.status.toUpperCase()}
                           </span>
+                          {alert.videoUrl && (
+                            <span className="px-2 py-1 bg-blue-500/20 text-blue-400 rounded-full text-xs font-medium">
+                              VIDEO
+                            </span>
+                          )}
                         </div>
                         <div className="space-y-2 text-sm">
+                          {alert.message && (
+                            <div className="text-white/80 italic mb-2">
+                              "{alert.message}"
+                            </div>
+                          )}
                           <div className="flex items-center space-x-2 text-white/70">
                             <Clock size={14} />
                             <span>{new Date(alert.timestamp).toLocaleString()}</span>
@@ -254,6 +369,14 @@ const SOSHistory = () => {
                             <MapPin size={14} />
                             <span>{formatLocation(alert.location)}</span>
                           </div>
+                          {alert.userId && (
+                            <div className="flex items-center space-x-2 text-white/60">
+                              <span className="text-xs">ID: {alert.userId}</span>
+                              {alert.videoDuration && (
+                                <span className="text-xs">• Video: {alert.videoDuration}s</span>
+                              )}
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>

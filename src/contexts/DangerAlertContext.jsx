@@ -1,7 +1,8 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { toast } from '@/components/ui/use-toast';
 import { useLocation } from '@/contexts/LocationContext';
+import { db } from '@/lib/firebase';
+import { collection, onSnapshot, query, where, orderBy } from 'firebase/firestore';
 
 const DangerAlertContext = createContext();
 
@@ -22,96 +23,104 @@ export const DangerAlertProvider = ({ children }) => {
   const [isConnected, setIsConnected] = useState(false);
   const { location } = useLocation();
 
-  // WebSocket connection for real-time alerts
+  // Request notification permission on mount
   useEffect(() => {
-    connectToAlertService();
-    
-    return () => {
-      disconnectFromAlertService();
-    };
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
   }, []);
 
-  // Backend integration function - WebSocket connection
-  const connectToAlertService = () => {
-    try {
-      // Placeholder for WebSocket connection
-      // Replace with actual WebSocket endpoint
-      const wsUrl = 'wss://your-backend.com/alerts';
-      
-      // For demo purposes, simulate connection
-      setIsConnected(true);
-      
-      // Simulate receiving alerts every 30 seconds for demo
-      const interval = setInterval(() => {
-        if (Math.random() > 0.8) { // 20% chance of alert
-          simulateIncomingAlert();
-        }
-      }, 30000);
+  // Firestore real-time listener for admin alerts
+  useEffect(() => {
+    const unsubscribe = connectToAlertService();
 
-      return () => clearInterval(interval);
-      
-      /* Actual WebSocket implementation:
-      const ws = new WebSocket(wsUrl);
-      
-      ws.onopen = () => {
-        setIsConnected(true);
-        console.log('Connected to alert service');
-      };
-      
-      ws.onmessage = (event) => {
-        const alertData = JSON.parse(event.data);
-        handleIncomingAlert(alertData);
-      };
-      
-      ws.onclose = () => {
-        setIsConnected(false);
-        console.log('Disconnected from alert service');
-      };
-      
-      ws.onerror = (error) => {
-        console.error('WebSocket error:', error);
-        setIsConnected(false);
-      };
-      */
-      
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
+  }, [location]);
+
+  // Firestore real-time listener for admin alerts
+  const connectToAlertService = () => {
+    if (!location) {
+      setIsConnected(false);
+      return null;
+    }
+
+    try {
+      // Query active alerts from alerts collection
+      const alertsQuery = query(
+        collection(db, 'alerts'),
+        where('isActive', '==', true)
+      );
+
+      // Set up real-time listener
+      const unsubscribe = onSnapshot(
+        alertsQuery,
+        (snapshot) => {
+          setIsConnected(true);
+
+          // Get all documents and sort them client-side
+          const allAlerts = [];
+          snapshot.docs.forEach((doc) => {
+            const alertData = {
+              id: doc.id,
+              ...doc.data()
+            };
+
+            // Convert Firestore timestamp to ISO string if needed
+            if (alertData.createdAt && alertData.createdAt.toDate) {
+              alertData.timestamp = alertData.createdAt.toDate().toISOString();
+            }
+
+            allAlerts.push(alertData);
+          });
+
+          // Sort by creation time (newest first)
+          allAlerts.sort((a, b) => {
+            const timeA = a.createdAt?.toDate?.() || new Date(a.timestamp || 0);
+            const timeB = b.createdAt?.toDate?.() || new Date(b.timestamp || 0);
+            return timeB - timeA;
+          });
+
+          // Check for new alerts by comparing with current history
+          allAlerts.forEach((alertData) => {
+            const existsInHistory = alertHistory.some(alert => alert.id === alertData.id);
+            if (!existsInHistory) {
+              console.log('New admin alert received:', alertData);
+              handleIncomingAlert(alertData);
+            }
+          });
+        },
+        (error) => {
+          console.error('Error listening to admin alerts:', error);
+          setIsConnected(false);
+          toast({
+            title: "Connection Error",
+            description: "Failed to connect to alert service.",
+            variant: "destructive"
+          });
+        }
+      );
+
+      console.log('Connected to Firestore alerts collection');
+      return unsubscribe;
+
     } catch (error) {
       console.error('Failed to connect to alert service:', error);
       setIsConnected(false);
+      return null;
     }
   };
 
-  const disconnectFromAlertService = () => {
-    setIsConnected(false);
-    // Close WebSocket connection here
-  };
 
-  // Simulate incoming alert for demo
-  const simulateIncomingAlert = () => {
-    if (!location) return;
 
-    const alertTypes = ['fire', 'violence', 'medical', 'evacuation'];
-    const randomType = alertTypes[Math.floor(Math.random() * alertTypes.length)];
-    
-    const mockAlert = {
-      id: Date.now().toString(),
-      type: randomType,
-      severity: 'high',
-      title: `${randomType.charAt(0).toUpperCase() + randomType.slice(1)} Alert`,
-      message: `Emergency situation reported in your area. Please stay alert and follow safety protocols.`,
-      location: {
-        latitude: location.latitude + (Math.random() - 0.5) * 0.01,
-        longitude: location.longitude + (Math.random() - 0.5) * 0.01
-      },
-      radius: 500, // meters
-      timestamp: new Date().toISOString(),
-      source: 'emergency_services'
-    };
 
-    handleIncomingAlert(mockAlert);
-  };
 
   const handleIncomingAlert = (alertData) => {
-    if (!location) return;
+    if (!location || !alertData.location) {
+      console.log('Missing location data:', { userLocation: location, alertLocation: alertData.location });
+      return;
+    }
 
     // Calculate distance to alert
     const distance = calculateDistance(
@@ -121,26 +130,59 @@ export const DangerAlertProvider = ({ children }) => {
       alertData.location.longitude
     );
 
-    // Check if user is within alert radius
-    if (distance <= alertData.radius) {
+    console.log('Alert distance check:', {
+      alertId: alertData.id,
+      alertTitle: alertData.title,
+      distance: Math.round(distance),
+      radius: alertData.radius,
+      userLocation: { lat: location.latitude, lng: location.longitude },
+      alertLocation: { lat: alertData.location.latitude, lng: alertData.location.longitude },
+      withinRadius: distance <= (alertData.radius || 1000)
+    });
+
+    // Check if user is within alert radius (or force show for testing)
+    const withinRadius = distance <= (alertData.radius || 1000);
+
+    // For testing purposes, show alerts even if outside radius but increase radius for admin alerts
+    const shouldShow = withinRadius || alertData.source === 'admin_panel';
+
+    if (shouldShow) {
       setActiveAlert(alertData);
-      
+
       // Add to history
-      const updatedHistory = [alertData, ...alertHistory].slice(0, 50); // Keep last 50 alerts
-      setAlertHistory(updatedHistory);
-      localStorage.setItem('alertHistory', JSON.stringify(updatedHistory));
+      setAlertHistory(prevHistory => {
+        // Check if alert already exists to avoid duplicates
+        const exists = prevHistory.some(alert => alert.id === alertData.id);
+        if (exists) return prevHistory;
+
+        const updatedHistory = [alertData, ...prevHistory].slice(0, 50); // Keep last 50 alerts
+        localStorage.setItem('alertHistory', JSON.stringify(updatedHistory));
+        return updatedHistory;
+      });
 
       // Trigger vibration if available
       if (navigator.vibrate) {
         navigator.vibrate([200, 100, 200, 100, 200]);
       }
 
+      // Show notification
       toast({
-        title: `⚠️ ${alertData.title}`,
-        description: alertData.message,
-        variant: "destructive",
+        title: `⚠️ ${alertData.title || 'Emergency Alert'}`,
+        description: `${alertData.message || 'Emergency situation in your area'} (${Math.round(distance)}m away)`,
+        variant: alertData.severity === 'low' ? "default" : "destructive",
         duration: 10000
       });
+
+      // Show browser notification if permission granted
+      if (Notification.permission === 'granted') {
+        new Notification(`⚠️ ${alertData.title || 'Emergency Alert'}`, {
+          body: alertData.message || 'Emergency situation in your area',
+          icon: '/icon-192x192.png',
+          tag: alertData.id
+        });
+      }
+    } else {
+      console.log('Alert outside radius and not from admin panel - skipping');
     }
   };
 
@@ -173,29 +215,15 @@ export const DangerAlertProvider = ({ children }) => {
     });
   };
 
-  // Backend integration function - fetch alerts from API
+  // Fetch alerts from Firestore (for manual refresh)
   const fetchAlertsFromAPI = async () => {
     try {
-      const response = await fetch('/api/alerts/nearby', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-        },
-        body: JSON.stringify({
-          location: location,
-          radius: 5000 // 5km radius
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch alerts');
-      }
-
-      const alerts = await response.json();
-      return alerts;
+      // The real-time listener handles this automatically
+      // This function is kept for manual refresh compatibility
+      console.log('Manual refresh triggered - alerts are updated in real-time');
+      return alertHistory;
     } catch (error) {
-      console.error('Failed to fetch alerts from API:', error);
+      console.error('Failed to fetch alerts:', error);
       return [];
     }
   };

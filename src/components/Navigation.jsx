@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -22,7 +21,7 @@ const Navigation = () => {
       animate={{ y: 0 }}
       transition={{ type: "spring", stiffness: 300, damping: 30 }}
     >
-      <div className="glass-dark rounded-t-3xl mx-4 mb-4 p-4">
+      <div className="glass-dark rounded-t-3xl p-4">
         <div className="flex justify-around items-center">
           {navItems.map((item) => {
             const Icon = item.icon;

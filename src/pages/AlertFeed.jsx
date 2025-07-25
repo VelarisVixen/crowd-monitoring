@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Helmet } from 'react-helmet';
@@ -35,12 +34,16 @@ const AlertFeed = () => {
     switch (type) {
       case 'fire':
         return '🔥';
-      case 'violence':
-        return '⚠️';
       case 'medical':
         return '🚑';
-      case 'evacuation':
-        return '🚨';
+      case 'crowd':
+        return '👥';
+      case 'weather':
+        return '🌧️';
+      case 'security':
+        return '🛡️';
+      case 'general':
+        return '📢';
       default:
         return '⚠️';
     }
@@ -64,7 +67,7 @@ const AlertFeed = () => {
     return alert.type === filter;
   });
 
-  const alertTypes = ['all', 'fire', 'violence', 'medical', 'evacuation'];
+  const alertTypes = ['all', 'fire', 'medical', 'crowd', 'weather', 'security', 'general'];
 
   return (
     <>

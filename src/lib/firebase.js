@@ -1,6 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
-import { getFirestore, collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { getFirestore, collection, addDoc, serverTimestamp, onSnapshot, query, where, orderBy } from "firebase/firestore";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { toast } from '@/components/ui/use-toast';
 
@@ -59,6 +59,8 @@ export const saveSOSAlertToFirestore = async (alertData) => {
     throw new Error('Failed to save SOS alert to database');
   }
 };
+
+export { db };
 
 export const uploadVideoAndGetURL = async (stream, userId) => {
   if (!stream) {
