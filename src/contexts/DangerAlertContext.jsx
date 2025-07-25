@@ -32,52 +32,62 @@ export const DangerAlertProvider = ({ children }) => {
     };
   }, [location]);
 
-  // Backend integration function - WebSocket connection
+  // Firestore real-time listener for admin alerts
   const connectToAlertService = () => {
-    try {
-      // Placeholder for WebSocket connection
-      // Replace with actual WebSocket endpoint
-      const wsUrl = 'wss://your-backend.com/alerts';
-      
-      // For demo purposes, simulate connection
-      setIsConnected(true);
-      
-      // Simulate receiving alerts every 30 seconds for demo
-      const interval = setInterval(() => {
-        if (Math.random() > 0.8) { // 20% chance of alert
-          simulateIncomingAlert();
-        }
-      }, 30000);
+    if (!location) {
+      setIsConnected(false);
+      return null;
+    }
 
-      return () => clearInterval(interval);
-      
-      /* Actual WebSocket implementation:
-      const ws = new WebSocket(wsUrl);
-      
-      ws.onopen = () => {
-        setIsConnected(true);
-        console.log('Connected to alert service');
-      };
-      
-      ws.onmessage = (event) => {
-        const alertData = JSON.parse(event.data);
-        handleIncomingAlert(alertData);
-      };
-      
-      ws.onclose = () => {
-        setIsConnected(false);
-        console.log('Disconnected from alert service');
-      };
-      
-      ws.onerror = (error) => {
-        console.error('WebSocket error:', error);
-        setIsConnected(false);
-      };
-      */
-      
+    try {
+      // Query active alerts from admin-alerts collection
+      const alertsQuery = query(
+        collection(db, 'admin-alerts'),
+        where('isActive', '==', true),
+        orderBy('createdAt', 'desc')
+      );
+
+      // Set up real-time listener
+      const unsubscribe = onSnapshot(
+        alertsQuery,
+        (snapshot) => {
+          setIsConnected(true);
+
+          snapshot.docChanges().forEach((change) => {
+            if (change.type === 'added') {
+              const alertData = {
+                id: change.doc.id,
+                ...change.doc.data()
+              };
+
+              // Convert Firestore timestamp to ISO string if needed
+              if (alertData.createdAt && alertData.createdAt.toDate) {
+                alertData.timestamp = alertData.createdAt.toDate().toISOString();
+              }
+
+              console.log('New admin alert received:', alertData);
+              handleIncomingAlert(alertData);
+            }
+          });
+        },
+        (error) => {
+          console.error('Error listening to admin alerts:', error);
+          setIsConnected(false);
+          toast({
+            title: "Connection Error",
+            description: "Failed to connect to alert service.",
+            variant: "destructive"
+          });
+        }
+      );
+
+      console.log('Connected to Firestore admin-alerts');
+      return unsubscribe;
+
     } catch (error) {
       console.error('Failed to connect to alert service:', error);
       setIsConnected(false);
+      return null;
     }
   };
 
