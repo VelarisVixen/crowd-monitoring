@@ -59,18 +59,33 @@ export const DangerAlertProvider = ({ children }) => {
         (snapshot) => {
           setIsConnected(true);
 
-          snapshot.docChanges().forEach((change) => {
-            if (change.type === 'added') {
-              const alertData = {
-                id: change.doc.id,
-                ...change.doc.data()
-              };
+          // Get all documents and sort them client-side
+          const allAlerts = [];
+          snapshot.docs.forEach((doc) => {
+            const alertData = {
+              id: doc.id,
+              ...doc.data()
+            };
 
-              // Convert Firestore timestamp to ISO string if needed
-              if (alertData.createdAt && alertData.createdAt.toDate) {
-                alertData.timestamp = alertData.createdAt.toDate().toISOString();
-              }
+            // Convert Firestore timestamp to ISO string if needed
+            if (alertData.createdAt && alertData.createdAt.toDate) {
+              alertData.timestamp = alertData.createdAt.toDate().toISOString();
+            }
 
+            allAlerts.push(alertData);
+          });
+
+          // Sort by creation time (newest first)
+          allAlerts.sort((a, b) => {
+            const timeA = a.createdAt?.toDate?.() || new Date(a.timestamp || 0);
+            const timeB = b.createdAt?.toDate?.() || new Date(b.timestamp || 0);
+            return timeB - timeA;
+          });
+
+          // Check for new alerts by comparing with current history
+          allAlerts.forEach((alertData) => {
+            const existsInHistory = alertHistory.some(alert => alert.id === alertData.id);
+            if (!existsInHistory) {
               console.log('New admin alert received:', alertData);
               handleIncomingAlert(alertData);
             }
