@@ -47,9 +47,9 @@ export const DangerAlertProvider = ({ children }) => {
     }
 
     try {
-      // Query active alerts from admin-alerts collection
+      // Query active alerts from alerts collection
       const alertsQuery = query(
-        collection(db, 'admin-alerts'),
+        collection(db, 'alerts'),
         where('isActive', '==', true)
       );
 
