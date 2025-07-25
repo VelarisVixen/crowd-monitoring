@@ -117,7 +117,10 @@ export const DangerAlertProvider = ({ children }) => {
 
 
   const handleIncomingAlert = (alertData) => {
-    if (!location || !alertData.location) return;
+    if (!location || !alertData.location) {
+      console.log('Missing location data:', { userLocation: location, alertLocation: alertData.location });
+      return;
+    }
 
     // Calculate distance to alert
     const distance = calculateDistance(
@@ -127,8 +130,23 @@ export const DangerAlertProvider = ({ children }) => {
       alertData.location.longitude
     );
 
-    // Check if user is within alert radius
-    if (distance <= (alertData.radius || 1000)) {
+    console.log('Alert distance check:', {
+      alertId: alertData.id,
+      alertTitle: alertData.title,
+      distance: Math.round(distance),
+      radius: alertData.radius,
+      userLocation: { lat: location.latitude, lng: location.longitude },
+      alertLocation: { lat: alertData.location.latitude, lng: alertData.location.longitude },
+      withinRadius: distance <= (alertData.radius || 1000)
+    });
+
+    // Check if user is within alert radius (or force show for testing)
+    const withinRadius = distance <= (alertData.radius || 1000);
+
+    // For testing purposes, show alerts even if outside radius but increase radius for admin alerts
+    const shouldShow = withinRadius || alertData.source === 'admin_panel';
+
+    if (shouldShow) {
       setActiveAlert(alertData);
 
       // Add to history
