@@ -23,6 +23,13 @@ export const DangerAlertProvider = ({ children }) => {
   const [isConnected, setIsConnected] = useState(false);
   const { location } = useLocation();
 
+  // Request notification permission on mount
+  useEffect(() => {
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
+  }, []);
+
   // Firestore real-time listener for admin alerts
   useEffect(() => {
     const unsubscribe = connectToAlertService();
