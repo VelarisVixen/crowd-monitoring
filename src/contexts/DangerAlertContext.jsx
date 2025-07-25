@@ -93,30 +93,7 @@ export const DangerAlertProvider = ({ children }) => {
 
 
 
-  // Simulate incoming alert for demo
-  const simulateIncomingAlert = () => {
-    if (!location) return;
 
-    const alertTypes = ['fire', 'violence', 'medical', 'evacuation'];
-    const randomType = alertTypes[Math.floor(Math.random() * alertTypes.length)];
-    
-    const mockAlert = {
-      id: Date.now().toString(),
-      type: randomType,
-      severity: 'high',
-      title: `${randomType.charAt(0).toUpperCase() + randomType.slice(1)} Alert`,
-      message: `Emergency situation reported in your area. Please stay alert and follow safety protocols.`,
-      location: {
-        latitude: location.latitude + (Math.random() - 0.5) * 0.01,
-        longitude: location.longitude + (Math.random() - 0.5) * 0.01
-      },
-      radius: 500, // meters
-      timestamp: new Date().toISOString(),
-      source: 'emergency_services'
-    };
-
-    handleIncomingAlert(mockAlert);
-  };
 
   const handleIncomingAlert = (alertData) => {
     if (!location) return;
