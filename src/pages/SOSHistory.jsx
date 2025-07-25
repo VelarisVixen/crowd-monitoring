@@ -24,6 +24,83 @@ const SOSHistory = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isConnected, setIsConnected] = useState(false);
 
+  // Listen to SOS alerts from Firebase
+  useEffect(() => {
+    const fetchSOSAlerts = () => {
+      try {
+        setIsLoading(true);
+
+        // Query for SOS alerts from the alerts collection
+        // Looking for documents that have userId field (indicating SOS alerts)
+        const sosQuery = query(
+          collection(db, 'alerts'),
+          where('userId', '!=', null)
+        );
+
+        const unsubscribe = onSnapshot(
+          sosQuery,
+          (snapshot) => {
+            setIsConnected(true);
+            setIsLoading(false);
+
+            const sosAlerts = [];
+            snapshot.docs.forEach((doc) => {
+              const data = doc.data();
+
+              // Convert Firestore data to match our UI structure
+              const sosAlert = {
+                id: doc.id,
+                timestamp: data.createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
+                location: data.location,
+                status: 'active', // Default status for SOS alerts
+                type: 'sos',
+                message: data.message || 'Emergency SOS Alert',
+                videoUrl: data.videoUrl,
+                videoThumbnail: data.videoThumbnail,
+                videoDuration: data.videoDuration,
+                userId: data.userId,
+                deviceInfo: data.deviceInfo
+              };
+
+              sosAlerts.push(sosAlert);
+            });
+
+            // Sort by timestamp (newest first)
+            sosAlerts.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+            setFirebaseSOS(sosAlerts);
+            console.log('Loaded SOS alerts from Firebase:', sosAlerts.length);
+          },
+          (error) => {
+            console.error('Error loading SOS alerts:', error);
+            setIsConnected(false);
+            setIsLoading(false);
+            toast({
+              title: "Failed to Load SOS History",
+              description: "Could not connect to Firebase database.",
+              variant: "destructive"
+            });
+          }
+        );
+
+        return unsubscribe;
+      } catch (error) {
+        console.error('Error setting up SOS listener:', error);
+        setIsLoading(false);
+        return null;
+      }
+    };
+
+    const unsubscribe = fetchSOSAlerts();
+
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
+  }, []);
+
+  // Combine local and Firebase SOS history
+  const allSOSHistory = [...firebaseSOS, ...panicHistory];
+
   const handleExportHistory = () => {
     if (panicHistory.length === 0) {
       toast({
