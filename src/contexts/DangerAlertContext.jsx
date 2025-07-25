@@ -50,8 +50,7 @@ export const DangerAlertProvider = ({ children }) => {
       // Query active alerts from admin-alerts collection
       const alertsQuery = query(
         collection(db, 'admin-alerts'),
-        where('isActive', '==', true),
-        orderBy('createdAt', 'desc')
+        where('isActive', '==', true)
       );
 
       // Set up real-time listener
