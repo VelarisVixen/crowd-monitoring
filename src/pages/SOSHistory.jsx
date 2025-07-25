@@ -20,6 +20,9 @@ const SOSHistory = () => {
   const { panicHistory, clearHistory } = usePanic();
   const [filter, setFilter] = useState('all');
   const [sortBy, setSortBy] = useState('newest');
+  const [firebaseSOS, setFirebaseSOS] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isConnected, setIsConnected] = useState(false);
 
   const handleExportHistory = () => {
     if (panicHistory.length === 0) {
