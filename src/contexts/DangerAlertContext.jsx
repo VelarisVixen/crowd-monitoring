@@ -102,7 +102,7 @@ export const DangerAlertProvider = ({ children }) => {
         }
       );
 
-      console.log('Connected to Firestore admin-alerts');
+      console.log('Connected to Firestore alerts collection');
       return unsubscribe;
 
     } catch (error) {
