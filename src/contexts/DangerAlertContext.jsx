@@ -23,14 +23,14 @@ export const DangerAlertProvider = ({ children }) => {
   const [isConnected, setIsConnected] = useState(false);
   const { location } = useLocation();
 
-  // WebSocket connection for real-time alerts
+  // Firestore real-time listener for admin alerts
   useEffect(() => {
-    connectToAlertService();
-    
+    const unsubscribe = connectToAlertService();
+
     return () => {
-      disconnectFromAlertService();
+      if (unsubscribe) unsubscribe();
     };
-  }, []);
+  }, [location]);
 
   // Backend integration function - WebSocket connection
   const connectToAlertService = () => {
