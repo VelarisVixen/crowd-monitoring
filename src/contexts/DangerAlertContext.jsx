@@ -91,10 +91,7 @@ export const DangerAlertProvider = ({ children }) => {
     }
   };
 
-  const disconnectFromAlertService = () => {
-    setIsConnected(false);
-    // Close WebSocket connection here
-  };
+
 
   // Simulate incoming alert for demo
   const simulateIncomingAlert = () => {
