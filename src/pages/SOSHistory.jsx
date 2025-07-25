@@ -208,7 +208,10 @@ const SOSHistory = () => {
           <div>
             <h1 className="text-2xl font-bold text-white">SOS History</h1>
             <p className="text-white/70 text-sm">
-              {panicHistory.length} total alerts sent
+              {isLoading ? 'Loading...' : `${allSOSHistory.length} total alerts sent`}
+              {isConnected && (
+                <span className="ml-2 text-green-400">• Connected to Firebase</span>
+              )}
             </p>
           </div>
           <div className="flex space-x-2">
