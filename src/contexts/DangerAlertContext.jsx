@@ -1,7 +1,8 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { toast } from '@/components/ui/use-toast';
 import { useLocation } from '@/contexts/LocationContext';
+import { db } from '@/lib/firebase';
+import { collection, onSnapshot, query, where, orderBy } from 'firebase/firestore';
 
 const DangerAlertContext = createContext();
 
