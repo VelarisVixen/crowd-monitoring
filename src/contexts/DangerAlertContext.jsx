@@ -181,6 +181,8 @@ export const DangerAlertProvider = ({ children }) => {
           tag: alertData.id
         });
       }
+    } else {
+      console.log('Alert outside radius and not from admin panel - skipping');
     }
   };
 
