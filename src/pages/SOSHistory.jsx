@@ -356,6 +356,11 @@ const SOSHistory = () => {
                           )}
                         </div>
                         <div className="space-y-2 text-sm">
+                          {alert.message && (
+                            <div className="text-white/80 italic mb-2">
+                              "{alert.message}"
+                            </div>
+                          )}
                           <div className="flex items-center space-x-2 text-white/70">
                             <Clock size={14} />
                             <span>{new Date(alert.timestamp).toLocaleString()}</span>
@@ -364,6 +369,14 @@ const SOSHistory = () => {
                             <MapPin size={14} />
                             <span>{formatLocation(alert.location)}</span>
                           </div>
+                          {alert.userId && (
+                            <div className="flex items-center space-x-2 text-white/60">
+                              <span className="text-xs">ID: {alert.userId}</span>
+                              {alert.videoDuration && (
+                                <span className="text-xs">• Video: {alert.videoDuration}s</span>
+                              )}
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>
