@@ -178,7 +178,7 @@ const SOSHistory = () => {
     return `${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)}`;
   };
 
-  const sortedHistory = [...panicHistory].sort((a, b) => {
+  const sortedHistory = [...allSOSHistory].sort((a, b) => {
     if (sortBy === 'newest') {
       return new Date(b.timestamp) - new Date(a.timestamp);
     } else {
