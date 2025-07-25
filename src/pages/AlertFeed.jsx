@@ -34,18 +34,16 @@ const AlertFeed = () => {
     switch (type) {
       case 'fire':
         return '🔥';
-      case 'violence':
-        return '⚠️';
       case 'medical':
         return '🚑';
-      case 'evacuation':
-        return '🚨';
-      case 'maintenance':
-        return '🔧';
+      case 'crowd':
+        return '👥';
       case 'weather':
         return '🌧️';
-      case 'traffic':
-        return '🚗';
+      case 'security':
+        return '🛡️';
+      case 'general':
+        return '📢';
       default:
         return '⚠️';
     }
