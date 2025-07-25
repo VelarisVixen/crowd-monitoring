@@ -174,29 +174,15 @@ export const DangerAlertProvider = ({ children }) => {
     });
   };
 
-  // Backend integration function - fetch alerts from API
+  // Fetch alerts from Firestore (for manual refresh)
   const fetchAlertsFromAPI = async () => {
     try {
-      const response = await fetch('/api/alerts/nearby', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-        },
-        body: JSON.stringify({
-          location: location,
-          radius: 5000 // 5km radius
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch alerts');
-      }
-
-      const alerts = await response.json();
-      return alerts;
+      // The real-time listener handles this automatically
+      // This function is kept for manual refresh compatibility
+      console.log('Manual refresh triggered - alerts are updated in real-time');
+      return alertHistory;
     } catch (error) {
-      console.error('Failed to fetch alerts from API:', error);
+      console.error('Failed to fetch alerts:', error);
       return [];
     }
   };
