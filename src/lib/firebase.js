@@ -1,17 +1,22 @@
 import { initializeApp } from "firebase/app";
+import { getAnalytics } from "firebase/analytics";
+import { getFirestore, collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { toast } from '@/components/ui/use-toast';
 
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_AUTH_DOMAIN",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_STORAGE_BUCKET",
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyC6XtUDmKv0aul-zUL3TRH1i2UxWtgCLU0",
+  authDomain: "crowd-monitoring-e1f70.firebaseapp.com",
+  projectId: "crowd-monitoring-e1f70",
+  storageBucket: "crowd-monitoring-e1f70.firebasestorage.app",
+  messagingSenderId: "1069463850395",
+  appId: "1:1069463850395:web:f24d177297c60e0c50a53e",
+  measurementId: "G-68VH97XQ6V"
 };
 
 const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
+const db = getFirestore(app);
 const storage = getStorage(app);
 
 const recordStream = (stream, duration) => {
@@ -40,28 +45,27 @@ const recordStream = (stream, duration) => {
   });
 };
 
+export const saveSOSAlertToFirestore = async (alertData) => {
+  try {
+    const docRef = await addDoc(collection(db, 'sos-alerts'), {
+      ...alertData,
+      createdAt: serverTimestamp()
+    });
+
+    console.log('SOS Alert saved to Firestore with ID:', docRef.id);
+    return docRef.id;
+  } catch (error) {
+    console.error('Error saving SOS alert to Firestore:', error);
+    throw new Error('Failed to save SOS alert to database');
+  }
+};
+
 export const uploadVideoAndGetURL = async (stream, userId) => {
   if (!stream) {
     throw new Error("No video stream provided.");
   }
   
-  if (firebaseConfig.apiKey === "YOUR_API_KEY") {
-    console.error("Firebase is not configured. Please add your credentials to src/lib/firebase.js");
-    toast({
-        title: "Firebase Not Configured",
-        description: "SOS video upload is disabled. Please configure Firebase.",
-        variant: "destructive",
-        duration: 10000
-    });
-    // Return mock data and continue flow
-    return {
-        videoUrl: "https://firebasestorage.googleapis.com/v0/b/project/o/sos-videos%2Fsos_12345678.mp4",
-        videoThumbnail: "https://firebasestorage.googleapis.com/v0/b/project/o/thumbnails%2Fsos_12345678.jpg",
-        videoDuration: 15,
-    };
-  }
-
-  const videoDurationMs = 15000;
+  const videoDurationMs = 5000; // 5 seconds as requested
   const videoBlob = await recordStream(stream, videoDurationMs);
   
   const videoFileName = `sos-videos/sos_${userId}_${Date.now()}.mp4`;

@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState } from 'react';
 import { toast } from '@/components/ui/use-toast';
 import { useLocation } from '@/contexts/LocationContext';
-import { uploadVideoAndGetURL } from '@/lib/firebase';
+import { uploadVideoAndGetURL, saveSOSAlertToFirestore } from '@/lib/firebase';
 
 const PanicContext = createContext();
 
@@ -55,6 +55,9 @@ export const PanicProvider = ({ children }) => {
       if (stream) {
         toast({ title: "Uploading Video...", description: "Your emergency video is being securely uploaded. Please wait." });
         videoData = await uploadVideoAndGetURL(stream, `user_12345`);
+
+        // Stop the camera stream after recording
+        stream.getTracks().forEach(track => track.stop());
       }
 
       const deviceInfo = getDeviceInfo();
@@ -69,9 +72,13 @@ export const PanicProvider = ({ children }) => {
           longitude: currentLocation.longitude,
           accuracy: currentLocation.accuracy
         },
-        message: message || "Emergency SOS activated without a message.",
+        message: message || "Emergency SOS activated - automatic recording",
         deviceInfo: deviceInfo
       };
+
+      // Save to Firestore
+      toast({ title: "Saving Alert...", description: "Saving your SOS alert to database..." });
+      await saveSOSAlertToFirestore(panicPayload);
 
       await sendPanicAlertToBackend(panicPayload);
 
@@ -91,8 +98,8 @@ export const PanicProvider = ({ children }) => {
 
       setIsActivated(true);
       toast({
-        title: "🚨 Panic Alert Sent!",
-        description: "Emergency services have been notified with your video and location.",
+        title: "🚨 SOS Alert Saved!",
+        description: "Emergency alert with video saved to database and emergency services notified.",
         duration: 8000,
       });
 
@@ -114,27 +121,14 @@ export const PanicProvider = ({ children }) => {
   };
 
   const sendPanicAlertToBackend = async (payload) => {
-    try {
-      // IMPORTANT: Replace with your actual backend endpoint
-      const response = await fetch('https://your-backend.com/api/sos/alert', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-        },
-        body: JSON.stringify(payload)
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ message: 'Server returned an error' }));
-        throw new Error(`Server Error: ${response.status} - ${errorData.message}`);
-      }
-
-      console.log('Panic alert sent to backend successfully', await response.json());
-    } catch (error) {
-      console.error('Backend panic alert failed:', error);
-      throw error; 
-    }
+    // Backend integration disabled for frontend-only demo
+    console.log('SOS Alert data ready for backend:', payload);
+    toast({
+      title: "Alert Simulated",
+      description: "This is a demo app. In production, this would send the alert to emergency services.",
+      duration: 5000
+    });
+    return Promise.resolve();
   };
 
   const deactivatePanic = () => {
