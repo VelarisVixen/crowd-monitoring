@@ -343,10 +343,17 @@ const SOSHistory = () => {
                       </div>
                       <div className="flex-1">
                         <div className="flex items-center space-x-2 mb-2">
-                          <h3 className="text-white font-semibold">Emergency Alert</h3>
+                          <h3 className="text-white font-semibold">
+                            {alert.type === 'sos' ? 'SOS Emergency Alert' : 'Emergency Alert'}
+                          </h3>
                           <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(alert.status)}`}>
                             {alert.status.toUpperCase()}
                           </span>
+                          {alert.videoUrl && (
+                            <span className="px-2 py-1 bg-blue-500/20 text-blue-400 rounded-full text-xs font-medium">
+                              VIDEO
+                            </span>
+                          )}
                         </div>
                         <div className="space-y-2 text-sm">
                           <div className="flex items-center space-x-2 text-white/70">
