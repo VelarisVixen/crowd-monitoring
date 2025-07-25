@@ -96,7 +96,7 @@ export const DangerAlertProvider = ({ children }) => {
 
 
   const handleIncomingAlert = (alertData) => {
-    if (!location) return;
+    if (!location || !alertData.location) return;
 
     // Calculate distance to alert
     const distance = calculateDistance(
@@ -107,25 +107,41 @@ export const DangerAlertProvider = ({ children }) => {
     );
 
     // Check if user is within alert radius
-    if (distance <= alertData.radius) {
+    if (distance <= (alertData.radius || 1000)) {
       setActiveAlert(alertData);
-      
+
       // Add to history
-      const updatedHistory = [alertData, ...alertHistory].slice(0, 50); // Keep last 50 alerts
-      setAlertHistory(updatedHistory);
-      localStorage.setItem('alertHistory', JSON.stringify(updatedHistory));
+      setAlertHistory(prevHistory => {
+        // Check if alert already exists to avoid duplicates
+        const exists = prevHistory.some(alert => alert.id === alertData.id);
+        if (exists) return prevHistory;
+
+        const updatedHistory = [alertData, ...prevHistory].slice(0, 50); // Keep last 50 alerts
+        localStorage.setItem('alertHistory', JSON.stringify(updatedHistory));
+        return updatedHistory;
+      });
 
       // Trigger vibration if available
       if (navigator.vibrate) {
         navigator.vibrate([200, 100, 200, 100, 200]);
       }
 
+      // Show notification
       toast({
-        title: `⚠️ ${alertData.title}`,
-        description: alertData.message,
+        title: `⚠️ ${alertData.title || 'Emergency Alert'}`,
+        description: alertData.message || 'Emergency situation in your area',
         variant: "destructive",
         duration: 10000
       });
+
+      // Show browser notification if permission granted
+      if (Notification.permission === 'granted') {
+        new Notification(`⚠️ ${alertData.title || 'Emergency Alert'}`, {
+          body: alertData.message || 'Emergency situation in your area',
+          icon: '/icon-192x192.png',
+          tag: alertData.id
+        });
+      }
     }
   };
 
