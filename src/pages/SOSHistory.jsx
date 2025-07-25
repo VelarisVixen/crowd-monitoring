@@ -140,7 +140,7 @@ const SOSHistory = () => {
   };
 
   const handleClearHistory = () => {
-    if (panicHistory.length === 0) {
+    if (allSOSHistory.length === 0) {
       toast({
         title: "No History to Clear",
         description: "Your SOS history is already empty."
@@ -149,6 +149,15 @@ const SOSHistory = () => {
     }
 
     clearHistory();
+
+    // Note: This only clears local history, Firebase data requires admin access
+    if (firebaseSOS.length > 0) {
+      toast({
+        title: "Local History Cleared",
+        description: "Local history cleared. Firebase records require admin access to delete.",
+        duration: 5000
+      });
+    }
   };
 
   const getStatusColor = (status) => {
