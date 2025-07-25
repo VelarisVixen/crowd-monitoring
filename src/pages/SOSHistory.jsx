@@ -287,19 +287,19 @@ const SOSHistory = () => {
         >
           <div className="glass rounded-2xl p-4 text-center">
             <div className="text-2xl font-bold text-red-400">
-              {panicHistory.filter(a => a.status === 'active').length}
+              {allSOSHistory.filter(a => a.status === 'active').length}
             </div>
             <div className="text-white/60 text-sm">Active</div>
           </div>
           <div className="glass rounded-2xl p-4 text-center">
             <div className="text-2xl font-bold text-green-400">
-              {panicHistory.filter(a => a.status === 'resolved').length}
+              {allSOSHistory.filter(a => a.status === 'resolved').length}
             </div>
             <div className="text-white/60 text-sm">Resolved</div>
           </div>
           <div className="glass rounded-2xl p-4 text-center">
             <div className="text-2xl font-bold text-yellow-400">
-              {panicHistory.filter(a => a.status === 'pending').length}
+              {allSOSHistory.filter(a => a.status === 'pending').length}
             </div>
             <div className="text-white/60 text-sm">Pending</div>
           </div>
