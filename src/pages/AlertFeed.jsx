@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Helmet } from 'react-helmet';
@@ -41,6 +40,12 @@ const AlertFeed = () => {
         return '🚑';
       case 'evacuation':
         return '🚨';
+      case 'maintenance':
+        return '🔧';
+      case 'weather':
+        return '🌧️';
+      case 'traffic':
+        return '🚗';
       default:
         return '⚠️';
     }
