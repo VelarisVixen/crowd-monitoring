@@ -60,6 +60,8 @@ export const saveSOSAlertToFirestore = async (alertData) => {
   }
 };
 
+export { db };
+
 export const uploadVideoAndGetURL = async (stream, userId) => {
   if (!stream) {
     throw new Error("No video stream provided.");
