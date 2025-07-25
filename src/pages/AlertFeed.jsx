@@ -69,7 +69,7 @@ const AlertFeed = () => {
     return alert.type === filter;
   });
 
-  const alertTypes = ['all', 'fire', 'violence', 'medical', 'evacuation', 'maintenance', 'weather', 'traffic'];
+  const alertTypes = ['all', 'fire', 'medical', 'crowd', 'weather', 'security', 'general'];
 
   return (
     <>
