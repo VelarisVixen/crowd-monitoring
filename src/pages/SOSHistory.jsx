@@ -102,7 +102,7 @@ const SOSHistory = () => {
   const allSOSHistory = [...firebaseSOS, ...panicHistory];
 
   const handleExportHistory = () => {
-    if (panicHistory.length === 0) {
+    if (allSOSHistory.length === 0) {
       toast({
         title: "No Data to Export",
         description: "You don't have any SOS history to export."
@@ -113,8 +113,8 @@ const SOSHistory = () => {
     // Backend integration hook - export history
     const exportData = {
       exportDate: new Date().toISOString(),
-      totalAlerts: panicHistory.length,
-      alerts: panicHistory.map(alert => ({
+      totalAlerts: allSOSHistory.length,
+      alerts: allSOSHistory.map(alert => ({
         id: alert.id,
         timestamp: alert.timestamp,
         location: alert.location,
