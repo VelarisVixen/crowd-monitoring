@@ -168,8 +168,8 @@ export const DangerAlertProvider = ({ children }) => {
       // Show notification
       toast({
         title: `⚠️ ${alertData.title || 'Emergency Alert'}`,
-        description: alertData.message || 'Emergency situation in your area',
-        variant: "destructive",
+        description: `${alertData.message || 'Emergency situation in your area'} (${Math.round(distance)}m away)`,
+        variant: alertData.severity === 'low' ? "default" : "destructive",
         duration: 10000
       });
 
