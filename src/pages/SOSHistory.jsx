@@ -1,18 +1,20 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Helmet } from 'react-helmet';
-import { 
-  AlertTriangle, 
-  MapPin, 
-  Clock, 
-  Trash2, 
+import {
+  AlertTriangle,
+  MapPin,
+  Clock,
+  Trash2,
   Download,
   Filter,
-  Calendar
+  Calendar,
+  RefreshCw
 } from 'lucide-react';
 import { usePanic } from '@/contexts/PanicContext';
 import { toast } from '@/components/ui/use-toast';
+import { db } from '@/lib/firebase';
+import { collection, query, where, orderBy, onSnapshot } from 'firebase/firestore';
 
 const SOSHistory = () => {
   const { panicHistory, clearHistory } = usePanic();
