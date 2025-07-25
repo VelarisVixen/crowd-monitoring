@@ -216,6 +216,15 @@ const SOSHistory = () => {
           </div>
           <div className="flex space-x-2">
             <motion.button
+              onClick={() => window.location.reload()}
+              className="p-3 glass rounded-xl hover:bg-white/10 transition-colors"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              title="Refresh SOS History"
+            >
+              <RefreshCw size={20} className={`text-white ${isLoading ? 'animate-spin' : ''}`} />
+            </motion.button>
+            <motion.button
               onClick={handleExportHistory}
               className="p-3 glass rounded-xl hover:bg-white/10 transition-colors"
               whileHover={{ scale: 1.05 }}
